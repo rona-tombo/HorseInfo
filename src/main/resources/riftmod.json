@@ -2,7 +2,8 @@
 	"id": "horsedebug",
 	"name": "HorseDebug",
 	"authors": [
-		"ATE47"
+		"ATE47",
+		"rona_tombo"
 	],
 	"listeners": [
 		"fr.atesab.horsedebug.RiftHorseDebug"

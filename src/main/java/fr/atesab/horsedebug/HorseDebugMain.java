@@ -1,22 +1,21 @@
 package fr.atesab.horsedebug;
 
-import java.util.List;
-import java.util.Locale;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.google.common.collect.Lists;
-
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.util.math.RayTraceResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.List;
+import java.util.Locale;
+
+//import net.minecraft.client.resources.I18n;
 
 public class HorseDebugMain {
 	private static final Logger log = LogManager.getLogger("HorseDebug");
@@ -40,31 +39,31 @@ public class HorseDebugMain {
 		return instance != null;
 	}
 
-	/**
-	 * register an API for HorseDebug
-	 * 
-	 * @throws IllegalStateException
-	 *             if an API is already register for it
-	 */
-	public static HorseDebugMain registerAPI(BuildAPI api) throws IllegalStateException {
-		instance = new HorseDebugMain();
-		log("Starting Xray with " + api.getAPIName());
-		return instance;
-	}
+	private static final double BAD_HP = 10; // min: 7.5
 
 	private HorseDebugMain() {
 		if (isAPIRegister())
 			throw new IllegalStateException("An API is already register for this mod!");
 	}
 
-	public static final double BAD_HP = 10; // min: 7.5
-	public static final double BAD_JUMP = 2.75; // min: 1.2
-	public static final double BAD_SPEED = 9; // min: ~7?
-	public static final double EXELLENT_HP = 14; // max: 15
-	public static final double EXELLENT_JUMP = 5; // max: 5.5?
-	public static final double EXELLENT_SPEED = 13;// max: 14.1?
+	private static final double BAD_JUMP = 2.75; // min: 1.2
+	private static final double BAD_SPEED = 9; // min: ~7?
+	private static final double EXCELLENT_HP = 14; // max: 15
+	private static final double EXCELLENT_JUMP = 5; // max: 5.5?
+	private static final double EXCELLENT_SPEED = 13;// max: 14.1?
 
-	public void drawInventory(Minecraft mc, int posX, int posY, String[] addText, EntityLivingBase entity) {
+	/**
+	 * register an API for HorseDebug
+	 *
+	 * @throws IllegalStateException if an API is already register for it
+	 */
+	public static HorseDebugMain registerAPI(BuildAPI api) throws IllegalStateException{
+		instance = new HorseDebugMain();
+		log("Starting HorseDebug with " + api.getAPIName());
+		return instance;
+	}
+
+	private void drawInventory(Minecraft mc, int posX, int posY, String[] addText, EntityLivingBase entity){
 		int l = addText.length;
 		if (l == 0)
 			return;
@@ -72,11 +71,12 @@ public class HorseDebugMain {
 		int sizeY = 0;
 		int itemSize = 20;
 		if (mc.fontRenderer.FONT_HEIGHT * 2 + 2 > itemSize)
-			itemSize = mc.fontRenderer.FONT_HEIGHT * 2 + 2;
-		for (int i = 0; i < addText.length; i++) {
+			// unused
+			// itemSize = mc.fontRenderer.FONT_HEIGHT * 2 + 2;
+			for(String s : addText){
 			sizeY += mc.fontRenderer.FONT_HEIGHT + 1;
-			int a = mc.fontRenderer.getStringWidth(addText[i]) + 10;
-			if (a > sizeX)
+				int a = mc.fontRenderer.getStringWidth(s) + 10;
+				if(a > sizeX)
 				sizeX = a;
 		}
 		if (entity != null) {
@@ -92,17 +92,17 @@ public class HorseDebugMain {
 		if (posY + sizeY > mw.getScaledHeight())
 			posY -= sizeY + 10;
 		int posY1 = posY + 5;
-		for (int i = 0; i < addText.length; i++) {
-			mc.fontRenderer.drawStringWithShadow(addText[i], posX + 5, posY1, 0xffffffff);
+		for(String s : addText){
+			mc.fontRenderer.drawStringWithShadow(s, posX + 5, posY1, 0xffffffff);
 			posY1 += (mc.fontRenderer.FONT_HEIGHT + 1);
 		}
-		if (entity != null) {
-			GlStateManager.color(1.0F, 1.0F, 1.0F);
+		if (entity != null){
+			GlStateManager.color3f(1.0F, 1.0F, 1.0F);
 			GuiInventory.drawEntityOnScreen(posX + sizeX - 55, posY + 105, 50, 50, 0, entity);
 		}
 	}
 
-	public String[] getEntityData(EntityLivingBase entity) {
+	private String[] getEntityData(EntityLivingBase entity){
 		List<String> text = Lists.newArrayList();
 		text.add("\u00a7b" + entity.getDisplayName().getFormattedText());
 		if (entity instanceof AbstractHorse) {
@@ -115,21 +115,27 @@ public class HorseDebugMain {
 				yVelocity -= 0.08;
 				yVelocity *= 0.98;
 			}
-			text.add(I18n.format("gui.act.invView.horse.jump") + " : "
-					+ getFormattedText(jumpHeight, BAD_JUMP, EXELLENT_JUMP) + " " + "("
-					+ significantNumbers(baby.getHorseJumpStrength()) + " iu)");
-			text.add(I18n.format("gui.act.invView.horse.speed") + " : "
-					+ getFormattedText(
-							baby.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue() * 43,
-							BAD_SPEED, EXELLENT_SPEED)
-					+ " m/s " + "("
+			text.add(
+					// I18nがうまく行ってなかったので除けてハードコードする
+					// I18n.format("gui.act.invView.horse.jump") +
+					"ジャンプ : "
+							+ getFormattedText(jumpHeight, BAD_JUMP, EXCELLENT_JUMP) + " " + "("
+							+ significantNumbers(baby.getHorseJumpStrength()) + " iu)");
+			text.add(// I18n.format("gui.act.invView.horse.speed") +
+					"スピード : "
+							+ getFormattedText(
+							//baby.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue() * 43,
+							baby.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue() * 43,
+							BAD_SPEED, EXCELLENT_SPEED)
+							+ " m/s " + "("
 					+ significantNumbers(
-							baby.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue())
-					+ " iu)");
-			text.add(I18n.format("gui.act.invView.horse.health") + " : "
-					+ getFormattedText((baby.getMaxHealth()/2D), BAD_HP, EXELLENT_HP) + " HP");
+							baby.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue())
+							+ " iu)");
+			text.add(//I18n.format("gui.act.invView.horse.health") +
+					"体力 : "
+							+ getFormattedText((baby.getMaxHealth() / 2D), BAD_HP, EXCELLENT_HP) + " HP");
 		}
-		return text.stream().toArray(String[]::new);
+		return text.toArray(new String[0]);
 	}
 
 	private static String getFormattedText(double value, double bad, double exellent) {
@@ -152,8 +158,8 @@ public class HorseDebugMain {
 		return (a ? "-" : "") + d1 + s;
 	}
 
-	public void renderOverlay() {
-		Minecraft mc = Minecraft.getMinecraft();
+	public void renderOverlay(){
+		Minecraft mc = Minecraft.getInstance();
 		if (!mc.gameSettings.showDebugInfo)
 			return;
 		MainWindow mw = mc.mainWindow;
@@ -162,10 +168,10 @@ public class HorseDebugMain {
 			drawInventory(mc, mw.getScaledWidth(), mw.getScaledHeight(), getEntityData(baby), baby);
 		} else {
 			RayTraceResult obj = mc.objectMouseOver;
-			if (obj != null && obj.typeOfHit.equals(RayTraceResult.Type.ENTITY)
-					&& obj.entityHit instanceof EntityLivingBase) {
+			if(obj != null && obj.type.equals(RayTraceResult.Type.ENTITY)
+					&& obj.entity instanceof EntityLivingBase){
 				drawInventory(mc, mw.getScaledWidth(), mw.getScaledHeight(),
-						getEntityData((EntityLivingBase) obj.entityHit), (EntityLivingBase) obj.entityHit);
+						getEntityData((EntityLivingBase) obj.entity), (EntityLivingBase) obj.entity);
 			}
 		}
 	}
